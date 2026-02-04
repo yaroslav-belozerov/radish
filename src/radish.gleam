@@ -1,6 +1,9 @@
 //// All timeouts are in milliseconds
 
+import gleam/string
+import gleam/io
 import gleam/erlang/process
+import qol_gleam/qol_list
 import gleam/float
 import gleam/int
 import gleam/list
@@ -44,7 +47,7 @@ pub type ExpireCondition {
 
 pub fn start(host: String, port: Int, options: List(StartOption)) {
   let #(timeout, options) = case
-    list.pop_map(options, fn(item) {
+    qol_list.pop_map(options, fn(item) {
       case item {
         Timeout(timeout) -> Ok(timeout)
         _ -> Error(Nil)
@@ -56,7 +59,7 @@ pub fn start(host: String, port: Int, options: List(StartOption)) {
   }
 
   let #(pool_size, options) = case
-    list.pop_map(options, fn(item) {
+    qol_list.pop_map(options, fn(item) {
       case item {
         PoolSize(pool_size) -> Ok(pool_size)
         _ -> Error(Nil)
@@ -67,9 +70,7 @@ pub fn start(host: String, port: Int, options: List(StartOption)) {
     Error(Nil) -> #(3, options)
   }
 
-  use client <- result.then(client.start(host, port, timeout, pool_size))
-
-  let options =
+  let hello_options =
     list.map(options, fn(item) {
       case item {
         Auth(password) -> command.Auth(password)
@@ -79,16 +80,9 @@ pub fn start(host: String, port: Int, options: List(StartOption)) {
       }
     })
 
-  use _ <- result.then(
-    utils.execute(client, command.hello(3, options), timeout)
-    |> result.map_error(fn(error) {
-      case error {
-        error.ServerError(error) -> actor.InitFailed(process.Abnormal(error))
-        _ -> actor.InitFailed(process.Abnormal("Failed to say hello"))
-      }
-      |> lifeguard.WorkerStartError
-    }),
-  )
+  let hello_cmd = command.hello(3, hello_options)
+
+  use client <- result.try(client.start(host, port, timeout, pool_size, hello_cmd))
 
   Ok(client)
 }
@@ -139,7 +133,7 @@ pub fn scan(client, cursor: Int, count: Int, timeout: Int) {
       [resp.Array([resp.BulkString(new_cursor_str), resp.Array(keys)])] ->
         case int.parse(new_cursor_str) {
           Ok(new_cursor) -> {
-            use array <- result.then(
+            use array <- result.try(
               list.try_map(keys, fn(item) {
                 case item {
                   resp.BulkString(value) -> Ok(value)
@@ -172,7 +166,7 @@ pub fn scan_pattern(
       [resp.Array([resp.BulkString(new_cursor_str), resp.Array(keys)])] ->
         case int.parse(new_cursor_str) {
           Ok(new_cursor) -> {
-            use array <- result.then(
+            use array <- result.try(
               list.try_map(keys, fn(item) {
                 case item {
                   resp.BulkString(value) -> Ok(value)
@@ -212,7 +206,7 @@ pub fn scan_with_type(
       [resp.Array([resp.BulkString(new_cursor_str), resp.Array(keys)])] ->
         case int.parse(new_cursor_str) {
           Ok(new_cursor) -> {
-            use array <- result.then(
+            use array <- result.try(
               list.try_map(keys, fn(item) {
                 case item {
                   resp.BulkString(value) -> Ok(value)
@@ -253,7 +247,7 @@ pub fn scan_pattern_with_type(
       [resp.Array([resp.BulkString(new_cursor_str), resp.Array(keys)])] ->
         case int.parse(new_cursor_str) {
           Ok(new_cursor) -> {
-            use array <- result.then(
+            use array <- result.try(
               list.try_map(keys, fn(item) {
                 case item {
                   resp.BulkString(value) -> Ok(value)

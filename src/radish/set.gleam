@@ -56,7 +56,7 @@ pub fn members(client, key: String, timeout: Int) {
   |> result.map(fn(value) {
     case value {
       [resp.Set(set)] -> {
-        use list <- result.then(
+        use list <- result.try(
           set
           |> set.to_list
           |> list.try_map(fn(item) {
@@ -83,7 +83,7 @@ pub fn scan(client, key: String, cursor: Int, count: Int, timeout: Int) {
       [resp.Array([resp.BulkString(new_cursor_str), resp.Array(keys)])] ->
         case int.parse(new_cursor_str) {
           Ok(new_cursor) -> {
-            use array <- result.then(
+            use array <- result.try(
               list.try_map(keys, fn(item) {
                 case item {
                   resp.BulkString(value) -> Ok(value)
@@ -117,7 +117,7 @@ pub fn scan_pattern(
       [resp.Array([resp.BulkString(new_cursor_str), resp.Array(keys)])] ->
         case int.parse(new_cursor_str) {
           Ok(new_cursor) -> {
-            use array <- result.then(
+            use array <- result.try(
               list.try_map(keys, fn(item) {
                 case item {
                   resp.BulkString(value) -> Ok(value)

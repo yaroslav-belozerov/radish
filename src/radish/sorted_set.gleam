@@ -205,7 +205,7 @@ pub fn scan(client, key: String, cursor: Int, count: Int, timeout: Int) {
       [resp.Array([resp.BulkString(new_cursor_str), resp.Array(members)])] ->
         case int.parse(new_cursor_str) {
           Ok(new_cursor) -> {
-            use array <- result.then(
+            use array <- result.try(
               members
               |> list.sized_chunk(2)
               |> list.try_map(fn(item) {
@@ -245,7 +245,7 @@ pub fn scan_pattern(
       [resp.Array([resp.BulkString(new_cursor_str), resp.Array(members)])] ->
         case int.parse(new_cursor_str) {
           Ok(new_cursor) -> {
-            use array <- result.then(
+            use array <- result.try(
               members
               |> list.sized_chunk(2)
               |> list.try_map(fn(item) {
@@ -355,7 +355,7 @@ pub fn head(client, key: String, timeout: Int) {
   |> result.map(fn(value) {
     case value {
       [resp.Array([member, ..])] -> {
-        use array <- result.then(
+        use array <- result.try(
           member
           |> fn(item) {
             case item {
@@ -395,7 +395,7 @@ pub fn range_by_score(client, key: String, min: Score, max: Score, timeout: Int)
 fn extract_member_score_pairs(value: List(resp.Value)) {
   case value {
     [resp.Array(members)] -> {
-      use array <- result.then(
+      use array <- result.try(
         members
         |> list.try_map(fn(item) {
           case item {

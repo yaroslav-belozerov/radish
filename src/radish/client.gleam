@@ -1,3 +1,7 @@
+import gleam/string
+import gleam/io
+import gleam/result
+import gleam/otp/static_supervisor
 import gleam/bit_array
 import gleam/erlang/process
 import gleam/otp/actor
@@ -21,37 +25,76 @@ pub type Message {
 }
 
 pub type Client =
-  lifeguard.Pool(Message)
+  process.Subject(lifeguard.PoolMsg(Message))
 
 pub fn start(
   host: String,
   port: Int,
   timeout: Int,
   pool_size: Int,
-) -> Result(lifeguard.Pool(Message), lifeguard.StartError) {
-  lifeguard.new(worker_spec(host, port, timeout))
-  |> lifeguard.with_size(pool_size)
-  |> lifeguard.start(timeout)
+  hello_cmd: BitArray,
+) -> Result(Client, actor.StartError) {
+  let name = process.new_name("radish_pool")
+  let subject = process.named_subject(name)
+  case lifeguard.new_with_initialiser(
+    name,
+    timeout,
+    fn (_) { init_worker(host, port, timeout, hello_cmd) }
+  )
+  |> lifeguard.on_message(handle_message)
+  |> lifeguard.size(pool_size)
+  |> lifeguard.start(timeout) {
+    Ok(_) -> Ok(subject)
+    Error(err) -> Error(err)
+  }
 }
 
-fn worker_spec(
+fn init_worker(
   host: String,
   port: Int,
   timeout: Int,
-) -> lifeguard.Spec(mug.Socket, Message) {
-  lifeguard.Spec(
-    init: fn(selector) {
-      case tcp.connect(host, port, timeout) {
-        Ok(socket) -> actor.Ready(socket, selector)
-        Error(_) -> actor.Failed("Unable to connect to Redis server")
-      }
-    },
-    init_timeout: timeout,
-    loop: handle_message,
+  hello_cmd: BitArray,
+) -> Result(lifeguard.Initialised(mug.Socket, Message), String) {
+  use socket <- result.try(
+    tcp.connect(host, port, timeout)
+    |> result.map_error(fn(_) { "Unable to connect to Redis server" })
   )
+
+  case tcp.send(socket, hello_cmd) {
+    Ok(Nil) -> {
+      let selector = tcp.new_selector()
+      case receive(socket, selector, <<>>, now(), timeout) {
+        Ok([resp.SimpleError(msg)]) | Ok([resp.BulkError(msg)]) -> {
+          let _ = mug.shutdown(socket)
+          Error("Authentication failed: " <> msg)
+        }
+        Ok(_) -> Ok(lifeguard.initialised(socket))
+        Error(err) -> {
+          let _ = mug.shutdown(socket)
+          Error("Failed to authenticate: " <> error_to_string(err))
+        }
+      }
+    }
+    Error(_) -> {
+      let _ = mug.shutdown(socket)
+      Error("Failed to send HELLO command")
+    }
+  }
 }
 
-fn handle_message(msg: Message, socket: mug.Socket) {
+fn error_to_string(err: error.Error) -> String {
+  case err {
+    error.NotFound -> "Not found"
+    error.RESPError -> "Invalid response"
+    error.ActorError -> "Pool error"
+    error.ConnectionError -> "Connection error"
+    error.TCPError(_) -> "Network error"
+    error.ServerError(msg) -> msg
+  }
+}
+
+
+fn handle_message(socket: mug.Socket, msg: Message) {
   case msg {
     Command(cmd, reply_with, timeout) -> {
       case tcp.send(socket, cmd) {
@@ -66,7 +109,7 @@ fn handle_message(msg: Message, socket: mug.Socket) {
             Error(error) -> {
               let _ = mug.shutdown(socket)
               actor.send(reply_with, Error(error))
-              actor.Stop(process.Abnormal("TCP Error"))
+              actor.stop_abnormal("TCP Error")
             }
           }
         }
@@ -74,7 +117,7 @@ fn handle_message(msg: Message, socket: mug.Socket) {
         Error(error) -> {
           let _ = mug.shutdown(socket)
           actor.send(reply_with, Error(error.TCPError(error)))
-          actor.Stop(process.Abnormal("TCP Error"))
+          actor.stop_abnormal("TCP Error")
         }
       }
     }
@@ -93,7 +136,7 @@ fn handle_message(msg: Message, socket: mug.Socket) {
             Error(error) -> {
               let _ = mug.shutdown(socket)
               actor.send(reply_with, Error(error))
-              actor.Stop(process.Abnormal("TCP Error"))
+              actor.stop_abnormal("TCP Error")
             }
           }
         }
@@ -101,7 +144,7 @@ fn handle_message(msg: Message, socket: mug.Socket) {
         Error(error) -> {
           let _ = mug.shutdown(socket)
           actor.send(reply_with, Error(error.TCPError(error)))
-          actor.Stop(process.Abnormal("TCP Error"))
+          actor.stop_abnormal("TCP Error")
         }
       }
     }
@@ -118,7 +161,7 @@ fn handle_message(msg: Message, socket: mug.Socket) {
         Error(error) -> {
           let _ = mug.shutdown(socket)
           actor.send(reply_with, Error(error))
-          actor.Stop(process.Abnormal("TCP Error"))
+          actor.stop_abnormal("TCP Error")
         }
       }
     }

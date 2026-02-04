@@ -3,18 +3,21 @@
 
 packages = [
   { name = "gleam_deque", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_deque", source = "hex", outer_checksum = "64D77068931338CF0D0CB5D37522C3E3CCA7CB7D6C5BACB41648B519CC0133C7" },
-  { name = "gleam_erlang", version = "0.33.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_erlang", source = "hex", outer_checksum = "A1D26B80F01901B59AABEE3475DD4C18D27D58FA5C897D922FCB9B099749C064" },
-  { name = "gleam_otp", version = "0.16.1", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_stdlib"], otp_app = "gleam_otp", source = "hex", outer_checksum = "50DA1539FC8E8FA09924EB36A67A2BBB0AD6B27BCDED5A7EF627057CF69D035E" },
-  { name = "gleam_stdlib", version = "0.53.0", build_tools = ["gleam"], requirements = [], otp_app = "gleam_stdlib", source = "hex", outer_checksum = "53F3E1E56F692C20FA3E0A23650AC46592464E40D8EF3EC7F364FB328E73CDF5" },
-  { name = "gleeunit", version = "1.2.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleeunit", source = "hex", outer_checksum = "F7A7228925D3EE7D0813C922E062BFD6D7E9310F0BEE585D3A42F3307E3CFD13" },
-  { name = "lifeguard", version = "1.1.0", build_tools = ["gleam"], requirements = ["gleam_deque", "gleam_erlang", "gleam_otp", "gleam_stdlib"], otp_app = "lifeguard", source = "hex", outer_checksum = "043A44839FC9CCD209DE305F0EC96C09AB8F6A830D7346A49829321B148EE730" },
-  { name = "mug", version = "1.2.0", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_stdlib"], otp_app = "mug", source = "hex", outer_checksum = "C5F62A3FD753B823CE296ED1B223D4B2FF06E91170A7DE35A283D70BB74B700E" },
+  { name = "gleam_erlang", version = "1.3.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_erlang", source = "hex", outer_checksum = "1124AD3AA21143E5AF0FC5CF3D9529F6DB8CA03E43A55711B60B6B7B3874375C" },
+  { name = "gleam_otp", version = "1.2.0", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_stdlib"], otp_app = "gleam_otp", source = "hex", outer_checksum = "BA6A294E295E428EC1562DC1C11EA7530DCB981E8359134BEABC8493B7B2258E" },
+  { name = "gleam_regexp", version = "1.1.1", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_regexp", source = "hex", outer_checksum = "9C215C6CA84A5B35BB934A9B61A9A306EC743153BE2B0425A0D032E477B062A9" },
+  { name = "gleam_stdlib", version = "0.68.1", build_tools = ["gleam"], requirements = [], otp_app = "gleam_stdlib", source = "hex", outer_checksum = "F7FAEBD8EF260664E86A46C8DBA23508D1D11BB3BCC6EE1B89B3BC3E5C83FF1E" },
+  { name = "gleeunit", version = "1.9.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleeunit", source = "hex", outer_checksum = "DA9553CE58B67924B3C631F96FE3370C49EB6D6DC6B384EC4862CC4AAA718F3C" },
+  { name = "lifeguard", version = "4.0.0", build_tools = ["gleam"], requirements = ["gleam_deque", "gleam_erlang", "gleam_otp", "gleam_stdlib"], otp_app = "lifeguard", source = "hex", outer_checksum = "31554E956FB93EC2BE46072C766D124E397EAD0DE0121463004523DD45AFCBF8" },
+  { name = "mug", version = "3.1.0", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_stdlib"], otp_app = "mug", source = "hex", outer_checksum = "C01279D98E40371DA23461774B63F0E3581B8F1396049D881B0C7EB32799D93F" },
+  { name = "qol_gleam", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_regexp", "gleam_stdlib"], otp_app = "qol_gleam", source = "hex", outer_checksum = "EE668E60EC481B81096C6514D21F53E92D189451019A4C441C52E77BB02127EB" },
 ]
 
 [requirements]
-gleam_erlang = { version = "~> 0.33" }
-gleam_otp = { version = "~> 0.16" }
-gleam_stdlib = { version = "~> 0.51 or ~> 1.0" }
+gleam_erlang = { version = ">= 0.23.0 and < 2.0.0" }
+gleam_otp = { version = ">= 0.10.0 and < 2.0.0" }
+gleam_stdlib = { version = ">= 0.34.0 and < 2.0.0" }
 gleeunit = { version = "~> 1.2" }
-lifeguard = { version = ">= 1.1.0 and < 2.0.0" }
-mug = { version = "~> 1.2" }
+lifeguard = { version = ">= 4.0.0 and < 5.0.0" }
+mug = { version = ">= 3.1.0 and < 4.0.0" }
+qol_gleam = { version = ">= 1.0.1 and < 2.0.0" }

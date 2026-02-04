@@ -4,7 +4,7 @@ import gleam/result
 import mug
 
 pub fn connect(host: String, port: Int, timeout: Int) {
-  mug.connect(mug.ConnectionOptions(host, port, timeout))
+  mug.connect(mug.ConnectionOptions(host, port, timeout, mug.Ipv4Preferred))
 }
 
 pub fn send(socket: mug.Socket, packet: BitArray) {
@@ -13,17 +13,18 @@ pub fn send(socket: mug.Socket, packet: BitArray) {
 
 pub fn new_selector() {
   process.new_selector()
-  |> mug.selecting_tcp_messages(mapper)
+  |> mug.select_tcp_messages(mapper)
 }
 
 pub fn receive(
   socket: mug.Socket,
   selector: process.Selector(Result(BitArray, mug.Error)),
   timeout: Int,
-) {
+) -> Result(BitArray, mug.Error) {
   mug.receive_next_packet_as_message(socket)
+
   selector
-  |> process.select(timeout)
+  |> process.selector_receive(timeout)
   |> result.replace_error(mug.Timeout)
   |> result.flatten
 }
@@ -33,7 +34,7 @@ pub fn receive_forever(
   selector: process.Selector(Result(BitArray, mug.Error)),
 ) {
   mug.receive_next_packet_as_message(socket)
-  process.select_forever(selector)
+  process.selector_receive_forever(selector)
 }
 
 fn mapper(message: mug.TcpMessage) -> Result(BitArray, mug.Error) {

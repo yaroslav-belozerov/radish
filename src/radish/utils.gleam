@@ -1,3 +1,5 @@
+import gleam/string
+import gleam/io
 import gleam/erlang/process
 import gleam/function
 import gleam/list
@@ -18,12 +20,12 @@ pub fn prepare(parts: List(String)) {
 }
 
 pub fn execute(client: client.Client, cmd: BitArray, timeout: Int) {
-  use reply <- result.then(
+  use reply <- result.try(
     lifeguard.call(client, client.Command(cmd, _, timeout), timeout, timeout)
     |> result.replace_error(error.ActorError),
   )
 
-  use reply <- result.then(reply)
+  use reply <- result.try(reply)
   case reply {
     [resp.SimpleError(error)] | [resp.BulkError(error)] ->
       Error(error.ServerError(error))
@@ -33,7 +35,7 @@ pub fn execute(client: client.Client, cmd: BitArray, timeout: Int) {
 
 pub fn execute_blocking(client: client.Client, cmd: BitArray, timeout: Int) {
   let my_subject = process.new_subject()
-  use _ <- result.then(
+  use _ <- result.try(
     lifeguard.send(
       client,
       client.BlockingCommand(cmd, my_subject, timeout),
@@ -43,8 +45,8 @@ pub fn execute_blocking(client: client.Client, cmd: BitArray, timeout: Int) {
   )
 
   process.new_selector()
-  |> process.selecting(my_subject, function.identity)
-  |> process.select_forever
+  |> process.select(my_subject)
+  |> process.selector_receive_forever
   |> fn(reply) {
     case reply {
       Ok([resp.SimpleError(error)]) | Ok([resp.BulkError(error)]) ->
@@ -61,8 +63,8 @@ pub fn receive_forever(client: client.Client, timeout: Int, rest) {
     lifeguard.send(client, client.ReceiveForever(my_subject, timeout), timeout)
 
   process.new_selector()
-  |> process.selecting(my_subject, function.identity)
-  |> process.select_forever
+  |> process.select(my_subject)
+  |> process.selector_receive_forever
   |> fn(reply) {
     case reply {
       Ok([resp.SimpleError(error)]) | Ok([resp.BulkError(error)]) -> {
