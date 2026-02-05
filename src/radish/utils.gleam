@@ -1,9 +1,9 @@
-import gleam/string
-import gleam/io
 import gleam/erlang/process
 import gleam/function
+import gleam/io
 import gleam/list
 import gleam/result
+import gleam/string
 
 import radish/client
 import radish/encoder.{encode}

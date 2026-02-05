@@ -1,10 +1,10 @@
-import gleam/string
-import gleam/io
-import gleam/result
-import gleam/otp/static_supervisor
 import gleam/bit_array
 import gleam/erlang/process
+import gleam/io
 import gleam/otp/actor
+import gleam/otp/static_supervisor
+import gleam/result
+import gleam/string
 
 import radish/decoder.{decode}
 import radish/error
@@ -36,14 +36,14 @@ pub fn start(
 ) -> Result(Client, actor.StartError) {
   let name = process.new_name("radish_pool")
   let subject = process.named_subject(name)
-  case lifeguard.new_with_initialiser(
-    name,
-    timeout,
-    fn (_) { init_worker(host, port, timeout, hello_cmd) }
-  )
-  |> lifeguard.on_message(handle_message)
-  |> lifeguard.size(pool_size)
-  |> lifeguard.start(timeout) {
+  case
+    lifeguard.new_with_initialiser(name, timeout, fn(_) {
+      init_worker(host, port, timeout, hello_cmd)
+    })
+    |> lifeguard.on_message(handle_message)
+    |> lifeguard.size(pool_size)
+    |> lifeguard.start(timeout)
+  {
     Ok(_) -> Ok(subject)
     Error(err) -> Error(err)
   }
@@ -57,7 +57,7 @@ fn init_worker(
 ) -> Result(lifeguard.Initialised(mug.Socket, Message), String) {
   use socket <- result.try(
     tcp.connect(host, port, timeout)
-    |> result.map_error(fn(_) { "Unable to connect to Redis server" })
+    |> result.map_error(fn(_) { "Unable to connect to Redis server" }),
   )
 
   case tcp.send(socket, hello_cmd) {
@@ -92,7 +92,6 @@ fn error_to_string(err: error.Error) -> String {
     error.ServerError(msg) -> msg
   }
 }
-
 
 fn handle_message(socket: mug.Socket, msg: Message) {
   case msg {

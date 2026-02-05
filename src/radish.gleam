@@ -1,16 +1,16 @@
 //// All timeouts are in milliseconds
 
-import gleam/string
-import gleam/io
 import gleam/erlang/process
-import qol_gleam/qol_list
 import gleam/float
 import gleam/int
+import gleam/io
 import gleam/list
 import gleam/option
 import gleam/otp/actor
 import gleam/result
+import gleam/string
 import lifeguard
+import qol_gleam/qol_list
 
 import radish/client
 import radish/command
@@ -82,7 +82,13 @@ pub fn start(host: String, port: Int, options: List(StartOption)) {
 
   let hello_cmd = command.hello(3, hello_options)
 
-  use client <- result.try(client.start(host, port, timeout, pool_size, hello_cmd))
+  use client <- result.try(client.start(
+    host,
+    port,
+    timeout,
+    pool_size,
+    hello_cmd,
+  ))
 
   Ok(client)
 }
