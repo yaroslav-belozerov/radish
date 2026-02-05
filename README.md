@@ -1,3 +1,8 @@
+> [!WARNING]
+> This is an updated version of the supposedly unmainained [massivefermion/radish](https://github.com/massivefermion/radish)  
+> This is also a mirror from my [forgejo](https://fj.tarakoshka.tech/tarakoshka/radish)  
+> I'm not good at gleam, but this seems to work. Still, proceed with caution.   
+
 ![radish](https://raw.githubusercontent.com/massivefermion/radish/main/banner.jpg)
 
 [![Package Version](https://img.shields.io/hexpm/v/radish)](https://hex.pm/packages/radish)
